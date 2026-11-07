@@ -1,0 +1,40 @@
+name: Publicar no Instagram
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+    inputs:
+      verificar:
+        description: "Só conferir o token (não publica)"
+        type: boolean
+        default: false
+
+concurrency:
+  group: publicar
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Agenda mais recente
+
+        run: git pull -q origin main
+      - name: Publicar o que vence agora
+        env:
+          META_TOKEN: ${{ secrets.META_TOKEN }}
+          IG_ID: "17841457415478446"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERIFICAR: ${{ inputs.verificar }}
+        run: |
+          git config user.name "cutseco"
+          git config user.email "actions@users.noreply.github.com"
+          python3 publicar.py
