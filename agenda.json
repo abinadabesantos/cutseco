@@ -2,16 +2,10 @@
   "posts": [
     {
       "id": "ensaio-20261107-0010-convenceu-o-giga-a-voltar",
-      "nome": "Convenceu o Giga a voltar",
-      "corte": "maxtitaniumsuplementos/ip0PbgD3-KM/Convenceu o Giga a voltar",
       "quando": "2026-11-07T00:10:00-03:00",
-      "legenda": "Bitelo não largou o powerlifting e ainda convenceu o Fábio Giga a subir no palco de novo: \"a última dança\" 🔥\n\nFonte: Max Titanium\n\n#maxtitanium #bitelo #fabiogiga #bodybuilding #powerlifting",
-      "video_url": "https://github.com/abinadabesantos/cutseco-agenda/releases/download/videos/20261107-0010-convenceu-o-giga-a-voltar.mp4",
-      "video_asset": 719374820,
-      "capa_url": "https://github.com/abinadabesantos/cutseco-agenda/releases/download/videos/20261107-0010-convenceu-o-giga-a-voltar.jpg",
-      "capa_asset": 719374926,
-      "status": "pendente",
-      "ensaio": true
+      "status": "ensaiado",
+      "permalink": "ensaio ok: container 17985578990913850 FINISHED, horário 2026-11-07T03:10:00+00:00; não publicado",
+      "publicado_em": "2026-11-07T03:10:00+00:00"
     }
   ]
 }
