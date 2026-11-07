@@ -24,7 +24,8 @@
       "video_asset": 719443984,
       "capa_url": "https://github.com/abinadabesantos/cutseco/releases/download/videos/20261107-1800-49ec51cc.jpg",
       "capa_asset": 719444158,
-      "status": "pendente"
+      "status": "atrasado",
+      "erro": "o Actions não rodou a tempo (124 min de atraso); publique à mão"
     },
     {
       "id": "20261107-2100-dc242401",
