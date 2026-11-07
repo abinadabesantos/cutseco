@@ -6,6 +6,18 @@
       "status": "ensaiado",
       "permalink": "ensaio ok: container 17985578990913850 FINISHED, horário 2026-11-07T03:10:00+00:00; não publicado",
       "publicado_em": "2026-11-07T03:10:00+00:00"
+    },
+    {
+      "id": "20261107-1200-3325c570",
+      "nome": "Da obra pro palco",
+      "corte": "maxtitaniumsuplementos/ip0PbgD3-KM/Da obra pro palco",
+      "quando": "2026-11-07T12:00:00-03:00",
+      "legenda": "Pedra na mão, trabalho duro… hoje o jogo virou 🧱➡️🏆 Bitelo e Fábio Giga lançam o Shape de Pedreiro pra dar chance a quem tá na obra\n\nFonte: Max Titanium\n\n#maxtitanium #bitelo #fabiogiga #superacao #bodybuilding",
+      "video_url": "https://github.com/abinadabesantos/cutseco/releases/download/videos/20261107-1200-3325c570.mp4",
+      "video_asset": 719443712,
+      "capa_url": "https://github.com/abinadabesantos/cutseco/releases/download/videos/20261107-1200-3325c570.jpg",
+      "capa_asset": 719443849,
+      "status": "pendente"
     }
   ]
 }
