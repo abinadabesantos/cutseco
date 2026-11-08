@@ -4,6 +4,7 @@ GRAPH = "https://graph.facebook.com/v26.0/"
 AGENDA = "agenda.json"
 JANELA = 35
 TENTATIVAS = 3
+VIGIA = 320   # min por execução (o job tem limite de 360)
 
 TOKEN, IG = os.environ["META_TOKEN"], os.environ["IG_ID"]
 GH, REPO = os.environ["GITHUB_TOKEN"], os.environ["GITHUB_REPOSITORY"]
@@ -88,20 +89,14 @@ def publicar(p):
     return meta("GET", mid, fields="permalink").get("permalink")
 
 
-def main():
-    if os.environ.get("VERIFICAR") == "true":
-        print("Token ok: @%s" % meta("GET", IG, fields="username")["username"])
-        return
+def ciclo():
     d = json.load(open(AGENDA, encoding="utf-8"))
     limite = agora() + datetime.timedelta(minutes=JANELA)
     fila = sorted((p for p in d["posts"] if p.get("status", "pendente") == "pendente"
                    and datetime.datetime.fromisoformat(p["quando"]) <= limite), key=lambda p: p["quando"])
-    if not fila:
-        print("Nada pra publicar até", limite.isoformat())
-        return
     for p in fila:
         print(p["quando"], p["id"], flush=True)
-        # sem limite de atraso (pedido de 08/11/2026): o cron do Actions às vezes atrasa 2 h ou mais,
+        # sem limite de atraso (pedido de 08/11/2026): o cron do Actions às vezes atrasa horas,
         # e é melhor o Reel sair atrasado do que não sair
         try:
             link = publicar(p)
@@ -122,8 +117,35 @@ def main():
         print("  ok:", link, flush=True)
         for a in assets:
             apagar_asset(a)
-    if any(p.get("status") == "erro" for p in fila):
-        sys.exit("Algum post deu erro; veja a agenda.json")
+    return d
+
+
+def main():
+    if os.environ.get("VERIFICAR") == "true":
+        print("Token ok: @%s" % meta("GET", IG, fields="username")["username"])
+        return
+    # O cron do GitHub não roda de 15 em 15 min de verdade (em 07-08/11/2026 rodou a cada 3-7 h), então cada
+    # execução fica de vigia por até VIGIA min, olhando a agenda a cada minuto, e no fim dispara a próxima
+    # (workflow_dispatch pelo GITHUB_TOKEN inicia outra execução) enquanto houver post pendente.
+    fim = agora() + datetime.timedelta(minutes=VIGIA)
+    while True:
+        subprocess.run(["git", "pull", "-q", "--rebase", "origin", "main"])
+        d = ciclo()
+        pendentes = [p for p in d["posts"] if p.get("status", "pendente") == "pendente"]
+        if not pendentes:
+            print("Nada pendente; encerrando sem encadear", flush=True)
+            return
+        if agora() >= fim:
+            break
+        time.sleep(60)
+    try:
+        req = urllib.request.Request("https://api.github.com/repos/%s/actions/workflows/publicar.yml/dispatches" % REPO,
+                                     json.dumps({"ref": "main"}).encode(), method="POST",
+                                     headers={"Authorization": "Bearer " + GH, "Accept": "application/vnd.github+json"})
+        urllib.request.urlopen(req, timeout=60)
+        print("Próxima vigia disparada", flush=True)
+    except urllib.error.HTTPError as e:
+        print("não consegui disparar a próxima vigia: %s %s" % (e, e.read()[:300]), flush=True)
 
 
 if __name__ == "__main__":
