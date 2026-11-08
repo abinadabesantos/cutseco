@@ -45,13 +45,38 @@ def apagar_asset(asset_id):
             print("  não apaguei o asset %s: %s" % (asset_id, e), flush=True)
 
 
-def salvar(d, msg):
-    json.dump(d, open(AGENDA, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
-    subprocess.run(["git", "add", AGENDA], check=True)
-    if subprocess.run(["git", "diff", "--cached", "--quiet"]).returncode:
+def mudar(fn, msg):
+    """Aplica fn na agenda mais recente do GitHub e grava. Nunca sobrescreve uma mudança feita de fora (o
+    agenda_ig.py mexe na agenda pelo GitHub enquanto a vigia roda): em vez de rebase, busca, reaplica e tenta de novo.
+    Em 08/11/2026 um rebase em conflito fez a vigia perder o "publicado" e o Reel saiu duas vezes."""
+    for tentativa in range(6):
+        subprocess.run(["git", "fetch", "-q", "origin", "main"], check=True)
+        subprocess.run(["git", "reset", "-q", "--hard", "origin/main"], check=True)
+        d = json.load(open(AGENDA, encoding="utf-8"))
+        fn(d)
+        json.dump(d, open(AGENDA, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
+        subprocess.run(["git", "add", AGENDA], check=True)
+        if not subprocess.run(["git", "diff", "--cached", "--quiet"]).returncode:
+            return d
         subprocess.run(["git", "commit", "-qm", msg], check=True)
-        subprocess.run(["git", "pull", "-q", "--rebase", "origin", "main"], check=True)
-        subprocess.run(["git", "push", "-q", "origin", "HEAD:main"], check=True)
+        if subprocess.run(["git", "push", "-q", "origin", "HEAD:main"]).returncode == 0:
+            return d
+        time.sleep(5)
+    raise RuntimeError("não consegui gravar a agenda (%s)" % msg)
+
+
+def no_post(pid, fn):
+    def f(d):
+        for p in d["posts"]:
+            if p["id"] == pid:
+                fn(p)
+    return f
+
+
+def atual(pid):
+    subprocess.run(["git", "fetch", "-q", "origin", "main"], check=True)
+    d = json.loads(subprocess.run(["git", "show", "origin/main:" + AGENDA], capture_output=True, check=True).stdout)
+    return next((p for p in d["posts"] if p["id"] == pid), None)
 
 
 def container(p):
@@ -75,6 +100,11 @@ def publicar(p):
     print("  container %s pronto, esperando %d s" % (cont, max(falta, 0)), flush=True)
     if falta > 0:
         time.sleep(falta)
+    # confere de novo antes de publicar: o post pode ter sido cancelado ou mudado de horário enquanto esperava
+    q = atual(p["id"])
+    if not q or q.get("status") != "publicando" or q["quando"] != p["quando"]:
+        print("  mudou na agenda enquanto esperava; não publico", flush=True)
+        return None
     if p.get("ensaio"):
         return "ensaio ok: container %s FINISHED, horário %s; não publicado" % (cont, agora().isoformat(timespec="seconds"))
     for i in range(6):
@@ -86,7 +116,7 @@ def publicar(p):
                 raise
             print("  publish: %s; tentando de novo" % e, flush=True)
             time.sleep(20)
-    return meta("GET", mid, fields="permalink").get("permalink")
+    return meta("GET", mid, fields="permalink").get("permalink") or "publicado (id %s)" % mid
 
 
 def ciclo():
@@ -96,28 +126,39 @@ def ciclo():
                    and datetime.datetime.fromisoformat(p["quando"]) <= limite), key=lambda p: p["quando"])
     for p in fila:
         print(p["quando"], p["id"], flush=True)
-        # sem limite de atraso (pedido de 08/11/2026): o cron do Actions às vezes atrasa horas,
-        # e é melhor o Reel sair atrasado do que não sair
+        # sem limite de atraso (pedido de 08/11/2026): é melhor o Reel sair atrasado do que não sair.
+        # "publicando" marca o post como da vigia; se a execução morrer no meio, ele fica assim (não repete sozinho)
+        pego = {}
+        def pegar(q):
+            if q.get("status", "pendente") == "pendente" and q["quando"] == p["quando"]:
+                q.update(status="publicando", pego_em=agora().isoformat(timespec="seconds")); pego["ok"] = True
+        mudar(no_post(p["id"], pegar), "publicando " + p["id"])
+        if not pego:
+            print("  mudou na agenda; pulo", flush=True)
+            continue
         try:
             link = publicar(p)
         except Exception as e:
-            p["tentativas"] = p.get("tentativas", 0) + 1
-            p["erro"] = str(e)[:300]
-            if p["tentativas"] >= TENTATIVAS:
-                p["status"] = "erro"
-            print("  falhou (%d/%d): %s" % (p["tentativas"], TENTATIVAS, e), flush=True)
-            salvar(d, "agenda")
+            print("  falhou: %s" % e, flush=True)
+            def falhou(q, e=e):
+                q["tentativas"] = q.get("tentativas", 0) + 1
+                q["erro"] = str(e)[:300]
+                q["status"] = "erro" if q["tentativas"] >= TENTATIVAS else "pendente"
+                q.pop("pego_em", None)
+            mudar(no_post(p["id"], falhou), "agenda")
             continue
-        assets = (p.get("video_asset"), p.get("capa_asset"))
-
-        enxuto = {"id": p["id"], "quando": p["quando"], "status": "ensaiado" if p.get("ensaio") else "publicado",
-                  "permalink": link, "publicado_em": agora().isoformat(timespec="seconds")}
-        p.clear(); p.update(enxuto)
-        salvar(d, "agenda")
+        if link is None:
+            continue
+        def feito(q, link=link):
+            if q.get("status") == "publicando":
+                enxuto = {"id": q["id"], "quando": q["quando"], "status": "ensaiado" if q.get("ensaio") else "publicado",
+                          "permalink": link, "publicado_em": agora().isoformat(timespec="seconds")}
+                q.clear(); q.update(enxuto)
+        mudar(no_post(p["id"], feito), "agenda")
         print("  ok:", link, flush=True)
-        for a in assets:
+        for a in (p.get("video_asset"), p.get("capa_asset")):
             apagar_asset(a)
-    return d
+    return json.load(open(AGENDA, encoding="utf-8"))
 
 
 def main():
@@ -129,7 +170,8 @@ def main():
     # (workflow_dispatch pelo GITHUB_TOKEN inicia outra execução) enquanto houver post pendente.
     fim = agora() + datetime.timedelta(minutes=VIGIA)
     while True:
-        subprocess.run(["git", "pull", "-q", "--rebase", "origin", "main"])
+        subprocess.run(["git", "fetch", "-q", "origin", "main"])
+        subprocess.run(["git", "reset", "-q", "--hard", "origin/main"])
         d = ciclo()
         pendentes = [p for p in d["posts"] if p.get("status", "pendente") == "pendente"]
         if not pendentes:
