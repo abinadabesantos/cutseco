@@ -15,18 +15,18 @@
       "publicado_em": "2026-11-07T15:49:31+00:00"
     },
     {
-      "id": "20261107-1800-49ec51cc",
-      "quando": "2026-11-08T08:00:00-03:00",
-      "status": "publicado",
-      "permalink": "https://www.instagram.com/reel/DffAXTVkwNF/",
-      "publicado_em": "2026-11-08T14:48:26+00:00"
-    },
-    {
       "id": "20261107-2100-dc242401",
       "quando": "2026-11-07T21:00:00-03:00",
       "status": "publicado",
       "permalink": "https://www.instagram.com/reel/DffAlbkCfRP/",
       "publicado_em": "2026-11-08T14:50:14+00:00"
+    },
+    {
+      "id": "20261107-1800-49ec51cc",
+      "quando": "2026-11-08T08:00:00-03:00",
+      "status": "publicado",
+      "permalink": "https://www.instagram.com/reel/DffAXTVkwNF/",
+      "publicado_em": "2026-11-08T14:48:26+00:00"
     },
     {
       "id": "20261108-0900-5016dd57",
@@ -78,6 +78,18 @@
       "video_asset": 722835964,
       "capa_url": "https://github.com/abinadabesantos/cutseco/releases/download/videos/20261108-2300-d1043b15.jpg",
       "capa_asset": 722836052,
+      "status": "pendente"
+    },
+    {
+      "id": "20261109-0900-98af23fd",
+      "nome": "Não copie a dieta de atleta",
+      "corte": "maxtitaniumsuplementos/hfomUMyo3wM/Não copie a dieta de atleta",
+      "quando": "2026-11-09T09:00:00-03:00",
+      "legenda": "Não queira fazer o que o atleta faz 🚫 Giga explica: dieta de quem vai subir no palco não se compara com a de uma pessoa comum. Você aguenta uma, duas semanas, dá rebote e sai comendo tudo. O certo é equilíbrio pra conseguir seguir por mais tempo.\n\nFonte: Max Titanium\n\n#maxtitanium #bitelo #fabiogiga #dieta #emagrecimento",
+      "video_url": "https://github.com/abinadabesantos/cutseco/releases/download/videos/20261109-0900-98af23fd.mp4",
+      "video_asset": 725405456,
+      "capa_url": "https://github.com/abinadabesantos/cutseco/releases/download/videos/20261109-0900-98af23fd.jpg",
+      "capa_asset": 725405567,
       "status": "pendente"
     },
     {
