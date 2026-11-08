@@ -3,7 +3,6 @@ import datetime, json, os, subprocess, sys, time, urllib.error, urllib.parse, ur
 GRAPH = "https://graph.facebook.com/v26.0/"
 AGENDA = "agenda.json"
 JANELA = 35
-ATRASO_MAX = 120
 TENTATIVAS = 3
 
 TOKEN, IG = os.environ["META_TOKEN"], os.environ["IG_ID"]
@@ -102,11 +101,8 @@ def main():
         return
     for p in fila:
         print(p["quando"], p["id"], flush=True)
-        atraso = (agora() - datetime.datetime.fromisoformat(p["quando"])).total_seconds() / 60
-        if atraso > ATRASO_MAX:
-            p.update(status="atrasado", erro="o Actions não rodou a tempo (%d min de atraso); publique à mão" % atraso)
-            salvar(d, "agenda")
-            continue
+        # sem limite de atraso (pedido de 08/11/2026): o cron do Actions às vezes atrasa 2 h ou mais,
+        # e é melhor o Reel sair atrasado do que não sair
         try:
             link = publicar(p)
         except Exception as e:
