@@ -675,8 +675,9 @@
       "video_asset": 774254796,
       "capa_url": "https://github.com/abinadabesantos/cutseco/releases/download/videos/20261123-1200-0e345693.jpg",
       "capa_asset": 774254955,
-      "status": "publicando",
-      "pego_em": "2026-11-23T14:25:40+00:00"
+      "status": "pendente",
+      "tentativas": 1,
+      "erro": "container 17990640983913850: Error: Media upload has failed with error code 2207077"
     },
     {
       "id": "20261123-1800-80ace55f",
